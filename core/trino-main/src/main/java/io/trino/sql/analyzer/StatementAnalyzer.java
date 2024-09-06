@@ -1596,8 +1596,16 @@ class StatementAnalyzer
                     .withRelationType(RelationId.of(node), queryBodyScope.getRelationType())
                     .build();
 
+            // collect output columns info
+            ImmutableList.Builder<OutputColumn> outputColumns = ImmutableList.builder();
+            for (Field field : queryScope.getRelationType().getVisibleFields()) {
+                OutputColumn outputColumn = new OutputColumn(new Column(field.getName().orElse(""), field.getType().toString()), analysis.getSourceColumns(field));
+                outputColumns.add(outputColumn);
+            }
+            
             analysis.setScope(node, queryScope);
-            return queryScope;
+            QualifiedObjectName qualifiedName = createQualifiedObjectName(session, node, QualifiedName.of("query"));
+            analysis.setUpdateTarget(qualifiedName, Optional.empty(), Optional.of(outputColumns.build()));
         }
 
         @Override
